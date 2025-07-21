@@ -8,7 +8,7 @@ import type { StudyData } from "../types/studyData.ts";
 //型定義をインポート
 
 type UseFirebase = () => {
-  //useFirebasの型定義、関数として型定義 (() => {})
+  //useFirebaseの型定義、関数として型定義 (() => {})
   loading: boolean; //真偽値
   setLoading: React.Dispatch<React.SetStateAction<boolean>>; //React setStateの型
   email: string; //文字列
