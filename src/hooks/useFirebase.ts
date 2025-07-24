@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
-import { collection, getDocs, query, where } from "firebase/firestore"; //firestore関連追加
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore"; //firestore関連追加
 import { auth, db } from "../utils/firebase.ts"; //Firebaseクライアントから認証機能のインポート//db追加
 import type { StudyData } from "../types/studyData.ts";
 //型定義をインポート
@@ -22,6 +29,7 @@ type UseFirebase = () => {
   setLearnings: React.Dispatch<React.SetStateAction<StudyData[]>>; //追加
   fetchDb: (data: string) => Promise<void>; //追加
   calculateTotalTime: () => number; //追加
+  updateDb: (data: StudyData) => Promise<void>; //追加
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -118,6 +126,42 @@ export const useFirebase: UseFirebase = () => {
     }
   };
 
+  //追加：Firestoreデータ更新
+  const updateDb = async (data: StudyData) => {
+    //async/awaitで処理実施、dataは学習記録のStudyDataの型
+    setLoading(true); //ローディング中にセット
+    try {
+      const userDocumentRef = doc(db, "users_learnings", data.id);
+      //FirebaseSDKのdocにより、'users_learnings'のdata.idにマッチするドキュメントを取得
+      await updateDoc(userDocumentRef, {
+        //FirebaseSDKのupdateDoc()メソッドにより、titleとtimeを更新
+        title: data.title,
+        time: data.time,
+      });
+      toast({
+        //処理が正常終了すれば、Chakra UIのToast機能で、正常終了メッセージ表示
+        title: "データ更新が完了しました",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.log(error);
+      toast({
+        //エラー発生時は、Chakra UIのToast機能で、エラーメッセージ表示
+        title: "データ更新に失敗しました",
+        description: `${error}`,
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false); //最後にローディング状態を解除
+    }
+  };
+
   ////Others
   //追加、学習時間合計
   const calculateTotalTime = () => {
@@ -139,5 +183,6 @@ export const useFirebase: UseFirebase = () => {
     setLearnings,
     fetchDb,
     calculateTotalTime,
+    updateDb,
   };
 };
