@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
 import {
   collection,
