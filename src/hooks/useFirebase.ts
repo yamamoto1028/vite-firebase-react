@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
 import {
+  addDoc,
   collection,
   doc,
   getDocs,
@@ -30,6 +31,7 @@ type UseFirebase = () => {
   fetchDb: (data: string) => Promise<void>; //追加
   calculateTotalTime: () => number; //追加
   updateDb: (data: StudyData) => Promise<void>; //追加
+  entryDb: (data: StudyData) => Promise<void>; //追加
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -161,6 +163,41 @@ export const useFirebase: UseFirebase = () => {
       setLoading(false); //最後にローディング状態を解除
     }
   };
+  const entryDb = async (data: StudyData) => {
+    setLoading(true); //状態を処理中に設定
+    try {
+      // データ登録処理
+      const usersCollectionRef = collection(db, "users_learning");
+      const documentRef = await addDoc(usersCollectionRef, {
+        //FirebaseSDKのaddDocにより、'users_learnings'に、title, time, emailを新規追加（title,timeはStudyData型、emailはstringで追加）
+        title: data.title,
+        time: data.time,
+        email: email,
+      });
+      console.log(documentRef, data);
+      toast({
+        //処理が正常終了すれば、Chakra UIのToast機能で、正常終了メッセージ表示
+        title: "データ登録が完了しました",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      toast({
+        //エラー発生時は、Chakra UIのToast機能で、エラーメッセージ表示
+        title: "データ登録に失敗しました",
+        description: `${error}`,
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false); //最後にローディング状態を解除
+    }
+  };
 
   ////Others
   //追加、学習時間合計
@@ -184,5 +221,6 @@ export const useFirebase: UseFirebase = () => {
     fetchDb,
     calculateTotalTime,
     updateDb,
+    entryDb,
   };
 };
