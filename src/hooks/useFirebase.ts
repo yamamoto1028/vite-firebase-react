@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, type User } from "firebase/auth"; //Firebas
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   query,
@@ -24,14 +25,15 @@ type UseFirebase = () => {
   password: string; //文字列
   setPassword: React.Dispatch<React.SetStateAction<string>>; //React setStateの型
   handleLogin: (e: React.FormEvent<HTMLFormElement>) => Promise<void>; //関数handleLoginの型
-  user: User | null; // 追加、FirebaseSDKによるUser型またはNull
+  user: User | null; // FirebaseSDKによるUser型またはNull
   setUser: React.Dispatch<React.SetStateAction<User | null>>; //追加
-  learnings: StudyData[]; //追加、FirestoreDBから取得する学習記録の配列、StudyDataの型データによる配列
-  setLearnings: React.Dispatch<React.SetStateAction<StudyData[]>>; //追加
-  fetchDb: (data: string) => Promise<void>; //追加
-  calculateTotalTime: () => number; //追加
-  updateDb: (data: StudyData) => Promise<void>; //追加
-  entryDb: (data: StudyData) => Promise<void>; //追加
+  learnings: StudyData[]; //FirestoreDBから取得する学習記録の配列、StudyDataの型データによる配列
+  setLearnings: React.Dispatch<React.SetStateAction<StudyData[]>>;
+  fetchDb: (data: string) => Promise<void>;
+  calculateTotalTime: () => number;
+  updateDb: (data: StudyData) => Promise<void>;
+  entryDb: (data: StudyData) => Promise<void>;
+  deleteDb: (data: StudyData) => Promise<void>; //追加
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -199,6 +201,32 @@ export const useFirebase: UseFirebase = () => {
     }
   };
 
+  const deleteDb = async (data: StudyData) => {
+    setLoading(true);
+    try {
+      const userDocumentRef = doc(db, "users_learnings", data.id);
+      await deleteDoc(userDocumentRef);
+      toast({
+        title: "データを削除しました",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Error during delete:", error);
+      toast({
+        title: "データの削除に失敗しました",
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   ////Others
   //追加、学習時間合計
   const calculateTotalTime = () => {
@@ -222,5 +250,6 @@ export const useFirebase: UseFirebase = () => {
     calculateTotalTime,
     updateDb,
     entryDb,
+    deleteDb,
   };
 };
