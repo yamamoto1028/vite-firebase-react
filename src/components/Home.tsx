@@ -44,25 +44,31 @@ const Home = () => {
     calculateTotalTime,
     updateDb,
     entryDb,
-  } = useFirebase(); //useFirebase定義追加
-  const modalEdit = useDisclosure(); //追加：編集用モーダルのクローズ、オープン制御のフック、useDisclosureの定義※ChakraUI
-  const modalEntry = useDisclosure(); //追加：新規登録ようモーダルのクローズ、オープン制御のフック↑同様
-  const initialRef = useRef(null); //追加：モーダルオープン時のフォーカス箇所を定義
+    deleteDb,
+  } = useFirebase(); //useFirebase定義
+  const modalEdit = useDisclosure(); //編集用モーダルのクローズ、オープン制御のフック、useDisclosureの定義※ChakraUI
+  const modalEntry = useDisclosure(); //新規登録ようモーダルのクローズ、オープン制御のフック↑同様
+  const modalDelete = useDisclosure(); //追加：新規登録ようモーダルのクローズ、オープン制御のフック↑同様
+  const initialRef = useRef(null); //モーダルオープン時のフォーカス箇所を定義
   const [editLearning, setEditLearning] = useState<StudyData>({
-    //追加：学習記録の登録・更新・削除用のstate
+    //学習記録の登録・更新・削除用のstate
     id: "",
     title: "",
     time: 0,
   });
   const [entryLearning, setEntryLearning] = useState<StudyData>({
-    //追加
     id: "",
     title: "",
     time: 0,
   });
-  const toast = useToast(); //追加：ChakraUIのToast機能
+  const [deleteLearning, setDeleteLearning] = useState<StudyData>({
+    id: "",
+    title: "",
+    time: 0,
+  });
+  const toast = useToast(); //ChakraUIのToast機能
   useEffect(() => {
-    //useEffect追加
+    //useEffect
     if (user) {
       //ユーザーがセッション中であれば、
       fetchDb(email); //emailをキーに、FirestoreDBをフェッチ、データを取得
@@ -70,7 +76,7 @@ const Home = () => {
     }
   }, [user]); // userが更新された時に実行
   const handleUpdate = async () => {
-    //追加：クリック時、DBデータ更新し、その後、更新反映されたDBデータを取得、ローディングが解除されたら、モーダルクローズ
+    //クリック時、DBデータ更新し、その後、更新反映されたDBデータを取得、ローディングが解除されたら、モーダルクローズ
     await updateDb(editLearning); //useFirebaseのupdateDbを実行し、DBデータを更新
     fetchDb(email); //DB更新処理終了後、更新反映されたDBデータを改めて取得
     if (!loading) {
@@ -82,7 +88,7 @@ const Home = () => {
   };
 
   const handleEntry = async () => {
-    //追加：クリック時、入力データの新規登録、もしくは既存データの更新を実施
+    //クリック時、入力データの新規登録、もしくは既存データの更新を実施
     if (learnings.some((l) => l.title === entryLearning.title)) {
       //入力データのtitleが既存アイテムに存在するか確認
       const existingLearning = learnings.find(
@@ -103,6 +109,17 @@ const Home = () => {
       //ローディング解除されたら、0.5秒後、モーダルをクローズ
       setTimeout(() => {
         modalEntry.onClose();
+      }, 500);
+    }
+  };
+
+  const handleDelete = async () => {
+    await deleteDb(deleteLearning);
+    fetchDb(email); //処理完了後、反映されたDBデータを改めて取得
+    if (!loading) {
+      //ローディング解除されたら、0.5秒後、モーダルをクローズ
+      setTimeout(() => {
+        modalDelete.onClose();
       }, 500);
     }
   };
@@ -263,9 +280,50 @@ const Home = () => {
                           {/* 編集用モーダルここまで */}
                         </Td>
                         <Td>
-                          <Button variant="ghost">
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              //モーダルオープンのボタン部分
+                              setDeleteLearning(learning); //クリックしたら、mapで展開されているlearningをeditLearningにセット
+                              modalDelete.onOpen(); //モーダルをオープンする。編集用のモーダルのため、modalEdit.onOpen()の形で指定。
+                            }}
+                          >
                             <MdDelete color="black" />
                           </Button>
+                          <Modal
+                            initialFocusRef={initialRef} //ここからモーダルの内容
+                            isOpen={modalDelete.isOpen} //モーダルのオープン状態を監視、編集用のモーダルのため、modalEdit.を付与
+                            onClose={modalDelete.onClose} //モーダルクローズの定義、編集用のモーダルのため、modalEdit.を付与
+                          >
+                            <ModalOverlay />
+                            <ModalContent>
+                              <ModalHeader>データ削除</ModalHeader>
+                              <ModalCloseButton />
+                              <ModalBody pb={6}>
+                                <Box>
+                                  以下のデータを削除します。
+                                  <br />
+                                  学習内容：{deleteLearning.title}、学習時間:
+                                  {deleteLearning.time}
+                                </Box>
+                              </ModalBody>
+                              <ModalFooter>
+                                <Button onClick={modalDelete.onClose} mr={3}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  isLoading={loading}
+                                  loadingText="Loading"
+                                  spinnerPlacement="start"
+                                  ref={initialRef}
+                                  colorScheme="red"
+                                  onClick={handleDelete}
+                                >
+                                  削除
+                                </Button>
+                              </ModalFooter>
+                            </ModalContent>
+                          </Modal>
                         </Td>
                       </Tr>
                     ))}
