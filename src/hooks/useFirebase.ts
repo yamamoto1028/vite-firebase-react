@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
 import {
   addDoc,
@@ -167,7 +167,7 @@ export const useFirebase: UseFirebase = () => {
     setLoading(true); //状態を処理中に設定
     try {
       // データ登録処理
-      const usersCollectionRef = collection(db, "users_learning");
+      const usersCollectionRef = collection(db, "users_learnings");
       const documentRef = await addDoc(usersCollectionRef, {
         //FirebaseSDKのaddDocにより、'users_learnings'に、title, time, emailを新規追加（title,timeはStudyData型、emailはstringで追加）
         title: data.title,
