@@ -43,11 +43,19 @@ const Home = () => {
     fetchDb,
     calculateTotalTime,
     updateDb,
+    entryDb,
   } = useFirebase(); //useFirebase定義追加
-  const modalEdit = useDisclosure(); //追加：編集用モーダルのクローズ、オープン制御のフック、useDisclosureの定義
+  const modalEdit = useDisclosure(); //追加：編集用モーダルのクローズ、オープン制御のフック、useDisclosureの定義※ChakraUI
+  const modalEntry = useDisclosure(); //追加：新規登録ようモーダルのクローズ、オープン制御のフック↑同様
   const initialRef = useRef(null); //追加：モーダルオープン時のフォーカス箇所を定義
   const [editLearning, setEditLearning] = useState<StudyData>({
     //追加：学習記録の登録・更新・削除用のstate
+    id: "",
+    title: "",
+    time: 0,
+  });
+  const [entryLearning, setEntryLearning] = useState<StudyData>({
+    //追加
     id: "",
     title: "",
     time: 0,
@@ -69,6 +77,32 @@ const Home = () => {
       //ローディング解除されたら、0.5秒後、モーダルをクローズ
       setTimeout(() => {
         modalEdit.onClose();
+      }, 500);
+    }
+  };
+
+  const handleEntry = async () => {
+    //追加：クリック時、入力データの新規登録、もしくは既存データの更新を実施
+    if (learnings.some((l) => l.title === entryLearning.title)) {
+      //入力データのtitleが既存アイテムに存在するか確認
+      const existingLearning = learnings.find(
+        (l) => l.title === entryLearning.title
+      ); //既存確認結果をexistingLearningに代入
+      if (existingLearning) {
+        //既存アイテムがあれば
+        existingLearning.time += entryLearning.time; //該当既存アイテムの時間に入力された時間を加算し、
+        await updateDb(existingLearning); //DBデータを更新
+      }
+    } else {
+      //既存アイテムがなければ、DBへのデータ新規登録を実施
+      await entryDb(entryLearning);
+    }
+    fetchDb(email); //処理完了後、反映されたDBデータを改めて取得
+    setEntryLearning({ id: "", title: "", time: 0 }); //entryLearningを初期化
+    if (!loading) {
+      //ローディング解除されたら、0.5秒後、モーダルをクローズ
+      setTimeout(() => {
+        modalEntry.onClose();
       }, 500);
     }
   };
@@ -248,10 +282,107 @@ const Home = () => {
                 <Button
                   colorScheme="green"
                   variant="outline"
-                  onClick={() => {}}
+                  onClick={modalEntry.onOpen}
                 >
                   新規データ登録
                 </Button>
+                <Modal
+                  initialFocusRef={initialRef}
+                  isOpen={modalEntry.isOpen}
+                  onClose={modalEntry.onClose}
+                >
+                  <ModalOverlay />
+                  <ModalContent>
+                    <ModalHeader>新規データ登録</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody pb={6}>
+                      <FormControl>
+                        <FormLabel>学習内容</FormLabel>
+                        <Input
+                          ref={initialRef}
+                          placeholder="学習内容"
+                          name="newEntryTitle"
+                          value={entryLearning.title} //valueはロカールステートを利用
+                          onChange={(e) => {
+                            //Inputエリアのtitleの入力値をeditLearning.titleに格納
+                            setEntryLearning({
+                              ...entryLearning,
+                              title: e.target.value,
+                            });
+                          }}
+                        />
+                      </FormControl>
+
+                      <FormControl mt={4}>
+                        <FormLabel>学習時間</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="学習時間"
+                          name="newEntryTime"
+                          value={entryLearning.time} //valueはロカールステートを利用
+                          onChange={(e) => {
+                            //Inputエリアのtitleの入力値をeditLearning.timeに数値に変換して格納
+                            setEntryLearning({
+                              ...entryLearning,
+                              time: Number(e.target.value),
+                            });
+                          }}
+                        />
+                        <FormHelperText color={"black"}>
+                          <div>
+                            入力されている学習内容：
+                            {
+                              entryLearning.title //ロカールステートを利用
+                            }
+                          </div>
+                          <div>
+                            入力されている学習時間：
+                            {
+                              entryLearning.time //ロカールステートを利用
+                            }
+                          </div>
+                        </FormHelperText>
+                      </FormControl>
+                    </ModalBody>
+                    <ModalFooter>
+                      <Button
+                        isLoading={loading}
+                        loadingText="Loading"
+                        spinnerPlacement="start"
+                        colorScheme="green"
+                        mr={3}
+                        onClick={() => {
+                          if (
+                            entryLearning.title !== "" &&
+                            entryLearning.time > 0
+                          ) {
+                            //学習タイトルと時間が共に入力されていれば、//DB新規登録処理実行（登録済アイテムであれば既存アイテムに時間加算して更新）
+                            handleEntry();
+                          } else {
+                            toast({
+                              //学習タイトルと時間が共に入力されていなければ、エラーメッセージ表示
+                              title: "学習内容と時間を入力してください",
+                              position: "top",
+                              status: "error",
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          }
+                        }}
+                      >
+                        登録
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          //cancelクリックの場合、そのままモーダルクローズ
+                          modalEntry.onClose(); //新規登録用のモーダルのため、modalEntry.を付与
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
               </Stack>
             </Box>
             <Box px={25} mb={4}>
