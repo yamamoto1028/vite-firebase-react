@@ -33,7 +33,8 @@ type UseFirebase = () => {
   calculateTotalTime: () => number;
   updateDb: (data: StudyData) => Promise<void>;
   entryDb: (data: StudyData) => Promise<void>;
-  deleteDb: (data: StudyData) => Promise<void>; //追加
+  deleteDb: (data: StudyData) => Promise<void>;
+  handleLogout: () => Promise<void>;
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -70,6 +71,33 @@ export const useFirebase: UseFirebase = () => {
       unsubscribed(); //unsubscribed()を実行
     };
   }, [user]); //user状態に変化があった時に実行
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      const userLogout = await auth.signOut();
+      console.log("User Logout", userLogout);
+      toast({
+        title: "ログアウトしました",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast({
+        title: "ログアウトに失敗しました",
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   ////Firestore
   //追加、Firestoreデータ取得
@@ -251,5 +279,6 @@ export const useFirebase: UseFirebase = () => {
     updateDb,
     entryDb,
     deleteDb,
+    handleLogout,
   };
 };
