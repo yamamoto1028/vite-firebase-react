@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogCloseButton,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   Box,
   Button,
   Card,
@@ -45,11 +52,14 @@ const Home = () => {
     updateDb,
     entryDb,
     deleteDb,
+    handleLogout,
   } = useFirebase(); //useFirebase定義
   const modalEdit = useDisclosure(); //編集用モーダルのクローズ、オープン制御のフック、useDisclosureの定義※ChakraUI
   const modalEntry = useDisclosure(); //新規登録ようモーダルのクローズ、オープン制御のフック↑同様
   const modalDelete = useDisclosure(); //追加：新規登録ようモーダルのクローズ、オープン制御のフック↑同様
+  const alertLogout = useDisclosure(); //ログアウト時の確認アラートのモーダル制御
   const initialRef = useRef(null); //モーダルオープン時のフォーカス箇所を定義
+  const cancelRef = useRef(null); //追加
   const [editLearning, setEditLearning] = useState<StudyData>({
     //学習記録の登録・更新・削除用のstate
     id: "",
@@ -445,9 +455,47 @@ const Home = () => {
             </Box>
             <Box px={25} mb={4}>
               <Stack spacing={3}>
-                <Button width="100%" variant="outline" onClick={() => {}}>
+                <Button
+                  //アラートダイヤログのボタン部分
+                  width="100%"
+                  variant="outline"
+                  onClick={alertLogout.onOpen} ////アラートをオープンする。ログアウト用アラートのため、alertLogout.onOpen()の形で指定。
+                >
                   ログアウト
                 </Button>
+                <AlertDialog
+                  //ここからアラートダイヤログの内容
+                  motionPreset="slideInBottom" //表示の際のフェード指定
+                  leastDestructiveRef={cancelRef}
+                  onClose={alertLogout.onClose} //アラートのクローズ定義、ログアウト用のため、alertLogout.を付与
+                  isOpen={alertLogout.isOpen} //アラートのオープン状態を監視、ログアウト用のため、alertLogout.を付与
+                  isCentered
+                >
+                  <AlertDialogOverlay />
+                  <AlertDialogContent>
+                    <AlertDialogHeader>ログアウト</AlertDialogHeader>
+                    <AlertDialogCloseButton />
+                    <AlertDialogBody>ログアウトしますか?</AlertDialogBody>
+                    <AlertDialogFooter>
+                      <Button
+                        ref={cancelRef}
+                        onClick={alertLogout.onClose} //ログアウト用のため、alertLogout.を付与
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        isLoading={loading}
+                        loadingText="Loading"
+                        spinnerPlacement="start"
+                        colorScheme="red"
+                        ml={3}
+                        onClick={handleLogout} //クリック時、useFirebaseのhandleLogout実行
+                      >
+                        ログアウト
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </Stack>
             </Box>
             <Box px={25} mb={4}>
