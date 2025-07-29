@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
-import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
+import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  type User,
+} from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
 import {
   addDoc,
   collection,
@@ -35,6 +39,9 @@ type UseFirebase = () => {
   entryDb: (data: StudyData) => Promise<void>;
   deleteDb: (data: StudyData) => Promise<void>;
   handleLogout: () => Promise<void>;
+  passwordConf: string;
+  setPasswordConf: React.Dispatch<React.SetStateAction<string>>;
+  handleSignup: (e: React.FormEvent) => Promise<void>;
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -44,6 +51,7 @@ export const useFirebase: UseFirebase = () => {
   const [password, setPassword] = useState(""); //passwordを管理するstateの定義
   const [user, setUser] = useState<User | null>(null); // セッションユーザ情報のステート追加
   const [learnings, setLearnings] = useState<StudyData[]>([]); //学習記録データのステート追加
+  const [passwordConf, setPasswordConf] = useState(""); //入力されたpassword確認の為に再入力を行ったものを格納するState
   const navigate = useNavigate(); //React RouterのNavigate機能を利用
   const toast = useToast(); //Chakura UIのToastの利用
 
@@ -96,6 +104,64 @@ export const useFirebase: UseFirebase = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // サインアップ処理
+  const handleSignup = async (e: React.FormEvent) => {
+    //async/awaitによる非同期通信、React.FormEventによるイベントの型
+    e.preventDefault(); //submitイベントの本来の動作を抑止
+    if (password !== passwordConf) {
+      //入力したパスワードと再入力したパスワードの一致確認→一致しなければ、
+      toast({
+        title: "パスワードが一致しません", //トーストのメッセージ
+        position: "top", //トーストの位置
+        status: "error", //トーストの種類
+        duration: 2000, //トーストメッセージが消え始めるまでのミリ秒指定
+        isClosable: true, //トーストに表示するバツボタンの有無
+      });
+      return;
+    } else if (password.length > 6) {
+      //パスワード要件、６文字以上に合致するかチェック
+      toast({
+        title: "パスワードは6桁以上にしてください",
+        position: "top",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+      return; //上2つのどちらかに合致すればトーストエラー表示して処理終了
+    }
+    try {
+      //上記2つのどちらにも合致しなければ実施
+      setLoading(true); //ローディング状態をセット
+      // Firebaseにユーザーを作成する処理
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      ); //FirebaseSDK、createUserWithEmailAndPasswordによる、サインアップ処理実施
+      console.log("User Created", userCredential); //結果をコンソールに出力
+      toast({
+        //正常終了すればトーストで成功メッセージ表示
+        title: "ユーザー登録が完了しました",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      navigate("/"); //ルート('/')に移動
+    } catch (error) {
+      console.error("Error during sign up:", error); //エラー出力
+      toast({
+        title: "サインアップに失敗しました",
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false); //最後にローディング解除
     }
   };
 
@@ -280,5 +346,8 @@ export const useFirebase: UseFirebase = () => {
     entryDb,
     deleteDb,
     handleLogout,
+    passwordConf,
+    setPasswordConf,
+    handleSignup,
   };
 };
