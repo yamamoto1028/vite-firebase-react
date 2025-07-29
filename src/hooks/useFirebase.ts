@@ -88,10 +88,10 @@ export const useFirebase: UseFirebase = () => {
     } catch (error) {
       console.error("Error during logout:", error);
       toast({
-        title: "ログアウトしました",
+        title: "ログアウトに失敗しました",
         position: "top",
-        status: "success",
-        duration: 2000,
+        status: "error",
+        duration: 4000,
         isClosable: true,
       });
     } finally {
