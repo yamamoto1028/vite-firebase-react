@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; //useState, useEffectのインポート
 import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
-import { position, useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
+import { useToast } from "@chakra-ui/react"; //Chakra UIのToast機能のインポート
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -121,7 +121,7 @@ export const useFirebase: UseFirebase = () => {
         isClosable: true, //トーストに表示するバツボタンの有無
       });
       return;
-    } else if (password.length > 6) {
+    } else if (password.length < 6) {
       //パスワード要件、６文字以上に合致するかチェック
       toast({
         title: "パスワードは6桁以上にしてください",
