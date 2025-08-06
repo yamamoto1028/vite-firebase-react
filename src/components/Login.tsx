@@ -10,6 +10,8 @@ import {
   InputLeftElement,
   Stack,
 } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom"; //React RouterのuseNavigateのインポート
+
 import { FaUserCheck } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { useFirebase } from "../hooks/useFirebase";
@@ -17,6 +19,8 @@ import { useFirebase } from "../hooks/useFirebase";
 const Login = () => {
   const { loading, email, setEmail, password, setPassword, handleLogin } =
     useFirebase();
+  const navigate = useNavigate(); //React RouterのNavigate機能を利用
+
   return (
     <Flex justifyContent="center" boxSize="fit-content" mx="auto" p={5}>
       <Card size={{ base: "sm", md: "lg" }} p={4}>
@@ -75,7 +79,7 @@ const Login = () => {
                 colorScheme="green"
                 width="100%"
                 variant="outline"
-                onClick={() => {}}
+                onClick={() => navigate("/register")}
               >
                 新規登録
               </Button>
