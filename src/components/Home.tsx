@@ -40,6 +40,7 @@ import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { useFirebase } from "../hooks/useFirebase";
 import type { StudyData } from "../types/studyData";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const {
@@ -60,6 +61,7 @@ const Home = () => {
   const alertLogout = useDisclosure(); //ログアウト時の確認アラートのモーダル制御
   const initialRef = useRef(null); //モーダルオープン時のフォーカス箇所を定義
   const cancelRef = useRef(null); //追加
+  const navigate = useNavigate();
   const [editLearning, setEditLearning] = useState<StudyData>({
     //学習記録の登録・更新・削除用のstate
     id: "",
@@ -500,7 +502,13 @@ const Home = () => {
             </Box>
             <Box px={25} mb={4}>
               <Stack spacing={3}>
-                <Button width="100%" variant="outline" onClick={() => {}}>
+                <Button
+                  width="100%"
+                  variant="outline"
+                  onClick={() => {
+                    navigate("/updatePassword");
+                  }}
+                >
                   パスワード更新
                 </Button>
               </Stack>

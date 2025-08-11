@@ -5,6 +5,10 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   type User,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+  sendPasswordResetEmail,
 } from "firebase/auth"; //FirebaseSDKのemailログイン機能のインポート//Userも追加
 import {
   addDoc,
@@ -42,6 +46,10 @@ type UseFirebase = () => {
   passwordConf: string;
   setPasswordConf: React.Dispatch<React.SetStateAction<string>>;
   handleSignup: (e: React.FormEvent) => Promise<void>;
+  currentPassword: string;
+  setCurrentPassword: React.Dispatch<React.SetStateAction<string>>;
+  handleUpdatePassword: (e: React.FormEvent) => Promise<void>;
+  handleResetPassword: (e: React.FormEvent) => Promise<void>;
 };
 
 export const useFirebase: UseFirebase = () => {
@@ -52,6 +60,7 @@ export const useFirebase: UseFirebase = () => {
   const [user, setUser] = useState<User | null>(null); // セッションユーザ情報のステート追加
   const [learnings, setLearnings] = useState<StudyData[]>([]); //学習記録データのステート追加
   const [passwordConf, setPasswordConf] = useState(""); //入力されたpassword確認の為に再入力を行ったものを格納するState
+  const [currentPassword, setCurrentPassword] = useState(""); //パスワード更新時の現在のパスワードを格納するステート
   const navigate = useNavigate(); //React RouterのNavigate機能を利用
   const toast = useToast(); //Chakura UIのToastの利用
 
@@ -165,6 +174,71 @@ export const useFirebase: UseFirebase = () => {
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    //async/awaitによる非同期通信、React.FormEventによるイベントの型
+    e.preventDefault(); //submitの本来の動作を抑止
+    if (password !== passwordConf) {
+      //入力したパスワードと再入力したパスワードの一致確認
+      toast({
+        //一致しなければ、エラーメッセージ表示し、処理終了
+        title: "パスワードが一致しません",
+        position: "top",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+      return;
+    } else if (password.length < 6) {
+      //パスワード要件、6文字以上に合致するかチェック
+      toast({
+        //合致しなければ、エラーメッセージ表示し、処理終了
+        title: "パスワードは6文字以上にしてください",
+        position: "top",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+      return;
+    }
+    try {
+      //パスワードの更新にはユーザの再認証が必要
+      setLoading(true);
+      if (user) {
+        // 再認証のために、ユーザーの認証情報を取得
+        const credential = EmailAuthProvider.credential(
+          //EmailAuthProviderメソッドで認証情報取得
+          user.email!, //emai情報を取得、型としてはnullの可能性がある為、末尾に!を付与
+          currentPassword // 現在のパスワードを入力
+        );
+        await reauthenticateWithCredential(user, credential); //再認証処理
+
+        // パスワードの更新処理
+        await updatePassword(user, password);
+        toast({
+          title: "パスワードを更新しました",
+          position: "top",
+          status: "success",
+          duration: 2000,
+          isClosable: true,
+        });
+        navigate("/"); // updatePasswordが成功した場合にのみページ遷移
+      }
+    } catch (error: any) {
+      //エラーの場合は
+      console.error("Error during password reset:", error); //エラー出力
+      toast({
+        //エラーメッセージ表示
+        title: "パスワード更新に失敗しました",
+        description: `${error.message}`,
+        position: "top",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false); //最後にローディング解除
+    }
+  };
   ////Firestore
   //追加、Firestoreデータ取得
   const fetchDb = async (data: string) => {
@@ -187,6 +261,37 @@ export const useFirebase: UseFirebase = () => {
       console.error("Error getting documents: ", error); //エラー発生の場合、エラー出力
     } finally {
       setLoading(false); //最後に、ローディング状態を解除
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // パスワードリセットメール送信
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        //正常終了すれば成功メッセージ表示
+        title: "パスワード設定メールを確認してください",
+        position: "top",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Error during password reset", error); //エラー出力
+      toast({
+        //エラーメッセージ表示
+        title: "パスワード更新に失敗しました",
+        description: `${error.message}`,
+        position: "top",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -349,5 +454,9 @@ export const useFirebase: UseFirebase = () => {
     passwordConf,
     setPasswordConf,
     handleSignup,
+    currentPassword,
+    setCurrentPassword,
+    handleUpdatePassword,
+    handleResetPassword,
   };
 };

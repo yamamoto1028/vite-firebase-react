@@ -90,7 +90,7 @@ const Login = () => {
                   colorScheme="green"
                   width="100%"
                   variant="ghost"
-                  onClick={() => {}}
+                  onClick={() => navigate("/sendReset")}
                 >
                   パスワードをお忘れですか？
                 </Button>
