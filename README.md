@@ -1,3 +1,7 @@
+Firebaseコンソール
+https://console.firebase.google.com/u/0/project/vite-firebase-react/hosting/sites/vite-firebase-react
+
+
 全体の構成イメージ
 App.tsx
 トップコンポーネントです。
