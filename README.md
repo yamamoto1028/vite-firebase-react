@@ -1,6 +1,8 @@
 Firebaseコンソール
 https://console.firebase.google.com/u/0/project/vite-firebase-react/hosting/sites/vite-firebase-react
 
+https://zenn.dev/amayann/books/0d6c7caea3626b/viewer/3b9ef9
+
 
 全体の構成イメージ
 App.tsx
